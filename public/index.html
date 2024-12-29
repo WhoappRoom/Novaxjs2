@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forums</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f4f4f4 0%, #e0e0e0 100%);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #333;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    #posts {
+      width: 90%;
+      max-width: 800px;
+      margin-top: 20px;
+    }
+    .post {
+      background-color: #fff;
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .post:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .post h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 24px;
+    }
+    .post p {
+      color: #555;
+      font-size: 16px;
+    }
+    form {
+      display: flex;
+      background-color: #fff;
+      width: 400px;
+      padding: 20px;
+      border-radius: 10px;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: box-shadow 0.3s ease;
+    }
+    form:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    input, textarea {
+      width: 100%;
+      max-width: 600px;
+      margin: 10px 0;
+      outline: none;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      transition: border-color 0.3s ease;
+    }
+    input:focus, textarea:focus {
+      border-color: #007BFF;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    #container-form{
+      position: fixed;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(46, 46, 46, 0.8);
+    }
+    #cancel {
+      background-color: #f44336;
+    }
+    #cancel:hover {
+      background-color: #e53935;
+    }
+    #show-form {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #28a745;
+      color: white;
+      padding: 10px 15px;
+      font-size: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #show-form:hover {
+      background-color: #218838;
+    }
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .form-container input, .form-container textarea {
+      max-width: 600px;
+      width: 100%;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to the Forums!</h1>
+  <button id="show-form" onclick="document.getElementById('container-form').style.display = 'flex'">+</button>
+  
+  <!-- Posts section -->
+  <div id="posts"></div>
+
+  <!-- Form to add new post -->
+  <div id="container-form">
+    <form id="postForm">
+      <h1>Add New Post</h1>
+      <input type="text" id="title" placeholder="Enter post title" required />
+      <textarea id="content" rows="5" placeholder="Enter post content" required></textarea>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" id="cancel" onclick="document.getElementById('container-form').style.display = 'none'">Cancel</button>
+        <button type="submit">Add Post</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Fetch and display all posts when the page loads
+    fetch('/api/posts')
+      .then(response => response.json())
+      .then(posts => {
+        const postsDiv = document.getElementById('posts');
+        posts.forEach(post => {
+          const postDiv = document.createElement('div');
+          postDiv.classList.add('post');
+          postDiv.innerHTML = `<h2>${post.title}</h2><p>${post.content}</p>`;
+          postsDiv.appendChild(postDiv);
+        });
+      });
+
+    // Handle the form submission to add a new post
+    document.getElementById('postForm').addEventListener('submit', function(event) {
+      event.preventDefault();  // Prevent page reload on form submit
+
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value;
+
+      // Create a new post object
+      const newPost = { title, content };
+
+      // Send the new post data to the server via a POST request
+      fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPost),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message === "Post added successfully") {
+          document.getElementById('container-form').style.display = 'none';
+          // Clear the form and reload the posts
+          document.getElementById('title').value = '';
+          document.getElementById('content').value = '';
+          alert('Post added successfully!');
+          location.reload();  // Reload the page to display the new post
+        } else {
+          alert('Failed to add post: ' + data.message);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
